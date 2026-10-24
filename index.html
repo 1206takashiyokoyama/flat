@@ -31,17 +31,22 @@
 <body>
   <h2>ふらっと 体験デモ版</h2>
 
-  <button id="btnStart">開始</button>
-  <button id="btnStop">停止</button>
+  <div class="controls">
+    <button id="btnStart">開始</button>
+    <button id="btnStop">停止</button>
+  </div>
+
   <p id="status">状態: 待機中</p>
 
-  <!-- カメラ映像 -->
-  <video id="camera" autoplay playsinline></video>
+  <div class="layout">
+    <div class="video-area">
+      <video id="camera" autoplay playsinline></video>
+      <canvas id="overlay"></canvas>
+    </div>
 
-  <!-- 物体認識の描画用 canvas -->
-  <canvas id="overlay"></canvas>
-
-  <!-- 振動波形 -->
-  <canvas id="chart"></canvas>
+    <div class="chart-area">
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
 </body>
 </html>
