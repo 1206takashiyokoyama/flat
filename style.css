@@ -1,0 +1,57 @@
+/* 全体を画面に収める */
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0.5rem;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* ボタン群 */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.controls button {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.8rem;
+  font-size: 1rem;
+}
+
+/* レイアウト全体 */
+.layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+/* カメラ領域：画面の 35% */
+.video-area {
+  flex: 0 0 35%;
+  max-height: 35%;
+}
+
+.video-area video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: black;
+}
+
+/* グラフ領域：画面の 65% */
+.chart-area {
+  flex: 1;
+  max-height: 65%;
+}
+
+.chart-area canvas {
+  width: 100%;
+  height: 100%;
+}
