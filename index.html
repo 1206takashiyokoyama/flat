@@ -1,34 +1,47 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>ふらっと 体験デモ版</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="style.css">
+
+  <!-- TensorFlow.js & COCO-SSD -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
+  <!-- app.js（キャッシュ対策でバージョン番号付き） -->
+  <script src="app.js?v=20241024"></script>
+
+  <style>
+    #camera, #overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      max-width: 480px;
+    }
+    #chart {
+      margin-top: 300px;
+    }
+  </style>
 </head>
+
 <body>
+  <h2>ふらっと 体験デモ版</h2>
 
-<h2>ふらっと 体験デモ版</h2>
+  <button id="btnStart">開始</button>
+  <button id="btnStop">停止</button>
+  <p id="status">状態: 停止</p>
 
-<div class="controls">
-  <button id="btnStart">計測開始</button>
-  <button id="btnStop">計測停止</button>
-</div>
+  <!-- カメラ映像 -->
+  <video id="camera" autoplay playsinline></video>
 
-<p id="status">状態: 待機中</p>
+  <!-- 物体認識の描画用 canvas -->
+  <canvas id="overlay"></canvas>
 
-<div class="layout">
-  <div class="video-area">
-    <video id="camera" autoplay playsinline></video>
-  </div>
-
-  <div class="chart-area">
-    <canvas id="chart"></canvas>
-  </div>
-</div>
-
-<script src="app.js"></script>
+  <!-- 振動波形 -->
+  <canvas id="chart"></canvas>
 </body>
 </html>
