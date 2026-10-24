@@ -1,7 +1,9 @@
 let measuring = false;
 const MAX_POINTS = 300;
 
-// Chart.js 初期化（縦軸固定 ±5 m/s²）
+// ------------------------------
+// Chart.js（縦軸固定 ±5）
+// ------------------------------
 const ctx = document.getElementById("chart").getContext("2d");
 const chart = new Chart(ctx, {
   type: "line",
@@ -19,8 +21,8 @@ const chart = new Chart(ctx, {
     scales: {
       x: { display: false },
       y: {
-        min: -5,     // ★縦軸固定（下限）
-        max: 5,      // ★縦軸固定（上限）
+        min: -5,
+        max: 5,
         title: { display: true, text: "加速度 (m/s²)" }
       }
     }
@@ -33,18 +35,16 @@ function setStatus(s) {
 }
 
 // ------------------------------
-//  重力除去（ローパス＋ハイパス）
+// 重力除去（ローパス＋ハイパス）
 // ------------------------------
 let gravity = { x: 0, y: 0, z: 0 };
-const alpha = 0.8;  // ローパス係数（0.8〜0.98が一般的）
+const alpha = 0.95;  // 精度高め
 
 function removeGravity(acc) {
-  // ローパスで重力成分を推定
   gravity.x = alpha * gravity.x + (1 - alpha) * acc.x;
   gravity.y = alpha * gravity.y + (1 - alpha) * acc.y;
   gravity.z = alpha * gravity.z + (1 - alpha) * acc.z;
 
-  // ハイパスで振動成分だけ抽出
   return {
     x: acc.x - gravity.x,
     y: acc.y - gravity.y,
@@ -53,7 +53,7 @@ function removeGravity(acc) {
 }
 
 // ------------------------------
-//  計測開始
+// 振動計測
 // ------------------------------
 function startMeasuring() {
   if (measuring) return;
@@ -62,18 +62,12 @@ function startMeasuring() {
   window.addEventListener("devicemotion", onMotion);
 }
 
-// ------------------------------
-//  計測停止
-// ------------------------------
 function stopMeasuring() {
   measuring = false;
   setStatus("停止");
   window.removeEventListener("devicemotion", onMotion);
 }
 
-// ------------------------------
-//  波形更新
-// ------------------------------
 function updateChart(x, y, z) {
   const labels = chart.data.labels;
   const dx = chart.data.datasets[0].data;
@@ -95,14 +89,10 @@ function updateChart(x, y, z) {
   chart.update();
 }
 
-// ------------------------------
-//  センサーイベント
-// ------------------------------
 function onMotion(e) {
   const acc = e.accelerationIncludingGravity;
   if (!acc) return;
 
-  // 重力除去
   const filtered = removeGravity({
     x: acc.x || 0,
     y: acc.y || 0,
@@ -113,7 +103,57 @@ function onMotion(e) {
 }
 
 // ------------------------------
-//  カメラ開始
+// 物体認識（COCO-SSD）
+// ------------------------------
+let detectionModel = null;
+const overlay = document.getElementById("overlay");
+const overlayCtx = overlay.getContext("2d");
+
+async function loadDetectionModel() {
+  if (!detectionModel) {
+    detectionModel = await cocoSsd.load();
+    console.log("COCO-SSD model loaded");
+  }
+}
+
+async function startDetectionLoop(video) {
+  overlay.width = video.videoWidth;
+  overlay.height = video.videoHeight;
+
+  const allowed = ["person", "chair", "dining table"]; // ★ラベル絞り込み
+
+  async function detectFrame() {
+    if (!detectionModel) return;
+
+    const predictions = await detectionModel.detect(video);
+    overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+
+    predictions.forEach(p => {
+      if (!allowed.includes(p.class)) return;
+
+      const [x, y, w, h] = p.bbox;
+
+      overlayCtx.strokeStyle = "lime";
+      overlayCtx.lineWidth = 2;
+      overlayCtx.strokeRect(x, y, w, h);
+
+      overlayCtx.font = "16px sans-serif";
+      overlayCtx.fillStyle = "yellow";
+      overlayCtx.fillText(
+        `${p.class} (${Math.round(p.score * 100)}%)`,
+        x,
+        y > 10 ? y - 5 : 10
+      );
+    });
+
+    requestAnimationFrame(detectFrame);
+  }
+
+  detectFrame();
+}
+
+// ------------------------------
+// カメラ起動＋物体認識開始
 // ------------------------------
 async function startCamera() {
   try {
@@ -124,14 +164,19 @@ async function startCamera() {
     const video = document.getElementById("camera");
     video.srcObject = stream;
 
+    await video.play();
     setStatus("カメラ起動中");
+
+    await loadDetectionModel();
+    startDetectionLoop(video);
+
   } catch (err) {
     setStatus("カメラ起動失敗: " + err);
   }
 }
 
 // ------------------------------
-//  ボタン紐付け
+// ボタン
 // ------------------------------
 document.getElementById("btnStart").onclick = () => {
   startCamera();
